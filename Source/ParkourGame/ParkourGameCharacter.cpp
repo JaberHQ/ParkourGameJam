@@ -74,6 +74,11 @@ void AParkourGameCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AParkourGameCharacter::OnResetVR);
+
+	// Sprint
+	PlayerInputComponent->BindAction( "Sprint", IE_Pressed, this, &AParkourGameCharacter::StartSprint );
+	PlayerInputComponent->BindAction( "Sprint", IE_Released, this, &AParkourGameCharacter::StopSprint );
+
 }
 
 
@@ -137,4 +142,14 @@ void AParkourGameCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void AParkourGameCharacter::StartSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+}
+
+void AParkourGameCharacter::StopSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 }
