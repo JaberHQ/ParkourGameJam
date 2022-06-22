@@ -7,6 +7,7 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -79,6 +80,10 @@ void AParkourGameCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	PlayerInputComponent->BindAction( "Sprint", IE_Pressed, this, &AParkourGameCharacter::StartSprint );
 	PlayerInputComponent->BindAction( "Sprint", IE_Released, this, &AParkourGameCharacter::StopSprint );
 
+}
+
+void AParkourGameCharacter::ForwardTrace()
+{
 }
 
 
