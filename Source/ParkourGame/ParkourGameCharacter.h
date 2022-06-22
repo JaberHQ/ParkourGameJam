@@ -29,6 +29,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	bool m_isClimbing;
+
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Animations" )
+		UAnimMontage* Climb; // Anim Montage for Player stealth takedown
+
+private:
+	FVector m_wallNormal;
+	FVector m_wallLocation;
+
+	virtual void Tick( float DeltaTime ) override;
+
+	void Hang();
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -73,5 +85,7 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	void ForwardTrace();
+
+	void HeightTrace();
 };
 

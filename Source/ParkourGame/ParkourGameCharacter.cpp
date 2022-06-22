@@ -8,12 +8,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AParkourGameCharacter
 
 AParkourGameCharacter::AParkourGameCharacter()
+	:m_wallNormal()
+	,m_wallLocation()
+	,m_isClimbing( false )
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -82,9 +86,62 @@ void AParkourGameCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 
 }
 
+void AParkourGameCharacter::Tick( float DeltaTime )
+{
+	Super::Tick( DeltaTime );
+
+	ForwardTrace();
+	HeightTrace();
+}
+
+void AParkourGameCharacter::Hang()
+{
+	PlayAnimMontage( Climb, 0.0f );
+	GetMesh()->GetAnimInstance()->Montage_Pause();
+	m_isClimbing = true;
+}
+
 void AParkourGameCharacter::ForwardTrace()
 {
+	FVector start = GetActorLocation();
+	FVector end = ( GetActorForwardVector() * 150.0f ) + start;
+
+	FCollisionQueryParams traceParams( SCENE_QUERY_STAT( ForwardTrace ), true, GetInstigator() );
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add( GetOwner() );
+	FHitResult hit( ForceInit );
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle( GetWorld(), start, end, 10.0f, UEngineTypes::ConvertToTraceType( ECC_Visibility ), false, ActorsToIgnore, EDrawDebugTrace::ForOneFrame, hit, true, FLinearColor::Red);
+
+	m_wallNormal = hit.Normal;
+	m_wallLocation = hit.Location;
 }
+
+void AParkourGameCharacter::HeightTrace()
+{
+	FVector start = ( GetActorLocation() + ( GetActorForwardVector() * 75.0f ) ) + FVector( 0.0f, 0.0f, 500.0f );
+	FVector end = start - FVector( 0.0f, 0.0f, 500.0f );
+
+	FCollisionQueryParams traceParams( SCENE_QUERY_STAT( ForwardTrace ), true, GetInstigator() );
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add( GetOwner() );
+	FHitResult hit( ForceInit );
+	bool bHit = UKismetSystemLibrary::SphereTraceSingle( GetWorld(), start, end, 10.0f, UEngineTypes::ConvertToTraceType( ECC_Visibility ), false, ActorsToIgnore, EDrawDebugTrace::ForOneFrame, hit, true, FLinearColor::Blue );
+
+
+	if( bHit )
+	{
+		bool location = UKismetMathLibrary::InRange_FloatFloat( hit.Location.Z - GetMesh()->GetSocketLocation( "HipsSocket" ).Z, -50.0f, 0.0f, true, true );
+		
+		if( location )
+		{
+			GetCharacterMovement()->SetMovementMode( EMovementMode::MOVE_Flying );
+			GetCharacterMovement()->StopMovementImmediately();
+			Hang();
+		}
+	}
+}
+
+
 
 
 void AParkourGameCharacter::OnResetVR()
@@ -136,17 +193,17 @@ void AParkourGameCharacter::MoveForward(float Value)
 
 void AParkourGameCharacter::MoveRight(float Value)
 {
-	if ( (Controller != nullptr) && (Value != 0.0f) )
+	if( ( Controller != nullptr ) && ( Value != 0.0f ) && ( m_isClimbing == false ) )
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
+		const FRotator YawRotation( 0, Rotation.Yaw, 0 );
+
 		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		const FVector Direction = FRotationMatrix( YawRotation ).GetUnitAxis( EAxis::Y );
 		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
+		AddMovementInput( Direction, Value );
+	}	
 }
 
 void AParkourGameCharacter::StartSprint()
