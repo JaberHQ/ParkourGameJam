@@ -96,7 +96,7 @@ void AParkourGameCharacter::Tick( float DeltaTime )
 
 void AParkourGameCharacter::Hang()
 {
-	PlayAnimMontage( Climb, 0.0f );
+	PlayAnimMontage( Climb, 1.0f );
 	GetMesh()->GetAnimInstance()->Montage_Pause();
 	m_isClimbing = true;
 }
